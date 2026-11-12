@@ -1,471 +1,1227 @@
-    :root {
-        --bg: #0b0711;
-        --panel: rgba(20, 14, 30, 0.55);
-        --panel-2: rgba(20, 14, 30, 0.35);
-        --border: rgba(210, 190, 255, 0.18);
-        --border-2: rgba(210, 190, 255, 0.10);
-        --text: rgba(244, 241, 255, 0.92);
-        --muted: rgba(244, 241, 255, 0.62);
-        --accent: rgba(184, 134, 255, 0.95);
-        --accent-2: rgba(184, 134, 255, 0.25);
+:root {
+  --bg: #09080c;
+  --text: #f7f0dd;
+  --muted: rgba(247, 240, 221, 0.74);
+  --gold: #caa36a;
+  --gold-soft: rgba(202, 163, 106, 0.28);
+  --velvet-blue-1: #381940;
+  --velvet-blue-2: #2a102d;
+  --card: #f8f1e4;
+  --card-ink: #21120e;
 
-  /* FX */
-  --grain: 1;    /* 0..1 */
-  --vignette: 1; /* 0..1 */
-      }
+  --grain: 1;
+  --vignette: 1.12;
+}
 
-      html, body {
-        margin: 0;
-        height: 100%;
-        overflow: hidden;
-        font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic", sans-serif;
-  /* 背景はthree.js(canvas)側に描画するため、CSS側は保険の単色のみ */
+html,
+body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  font-family: "Yu Mincho", "Hiragino Mincho ProN", "Noto Serif JP", serif;
   background: var(--bg);
-        cursor: none;
-      }
+  color: var(--text);
+  cursor: auto;
+}
 
-      /* three.js canvas は最背面に固定（FX/UIを確実に上に載せる） */
-      #myCanvas {
-        position: fixed;
-        inset: 0;
-        z-index: 0;
-      }
+.loadingScreen {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  background: #fff;
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 700ms ease, visibility 700ms ease;
+}
 
-      /* クリック可能要素も含めてカーソルを出さない */
-      a, button, [role="button"], input, textarea, select {
-        cursor: none !important;
-      }
+.loadingScreen.is-hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
 
-      /* UIはcanvasの上に重ねる */
-      .ui {
-        position: fixed;
-        inset: 0;
-        pointer-events: none;
+.loadingScreen img {
+  display: block;
+  width: min(78vw, 720px);
+  max-height: 78vh;
+  object-fit: contain;
+}
+
+#myCanvas {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  filter: contrast(1.12) brightness(0.9) saturate(1.08);
+}
+
+.ui {
+  position: fixed;
+  inset: 0;
   z-index: 30;
-      }
+  pointer-events: none;
+}
 
-      /* --- Parallax（奥行き感） --- */
-      .parallax {
-        will-change: transform;
-        transform: translate3d(0, 0, 0);
-        transition: transform 120ms ease;
-      }
+.parallax {
+  will-change: transform;
+  transform: translate3d(0, 0, 0);
+  transition: transform 120ms ease;
+}
 
-      @media (prefers-reduced-motion: reduce) {
-        .parallax { transition: none; }
-      }
+@media (prefers-reduced-motion: reduce) {
+  .parallax {
+    transition: none;
+  }
+}
 
-      /* 画面全体の暗めフィルター + カーソル周りの発光 */
-      .fx {
-        position: fixed;
-        inset: 0;
-        pointer-events: none;
+.fx {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
   z-index: 20;
-      }
+}
 
-      /* グレイン（フィルムノイズ） */
-      .fx::before {
-        content: "";
-        position: absolute;
-        inset: -20%;
-        pointer-events: none;
-        z-index: 2;
-        opacity: var(--grain);
-        mix-blend-mode: overlay;
-        /* 軽量な疑似ノイズ（複数レイヤを重ねて粒っぽくする） */
-        background:
-          radial-gradient(circle at 13% 18%, rgba(255,255,255,0.10) 0 1px, rgba(0,0,0,0) 2px),
-          radial-gradient(circle at 72% 41%, rgba(255,255,255,0.08) 0 1px, rgba(0,0,0,0) 2px),
-          radial-gradient(circle at 49% 77%, rgba(255,255,255,0.06) 0 1px, rgba(0,0,0,0) 2px),
-          radial-gradient(circle at 31% 62%, rgba(0,0,0,0.12) 0 1px, rgba(0,0,0,0) 2px),
-          radial-gradient(circle at 88% 12%, rgba(0,0,0,0.10) 0 1px, rgba(0,0,0,0) 2px);
-        background-size: 120px 120px;
-        filter: blur(0.2px) contrast(120%);
-        transform: translate3d(0, 0, 0);
-        animation: grainShift 6.5s steps(10, end) infinite;
-      }
+.fx::before {
+  content: "";
+  position: absolute;
+  inset: -20%;
+  z-index: 2;
+  opacity: var(--grain);
+  mix-blend-mode: overlay;
+  background:
+    radial-gradient(circle at 13% 18%, rgba(255, 255, 255, 0.09) 0 1px, transparent 2px),
+    radial-gradient(circle at 72% 41%, rgba(255, 255, 255, 0.08) 0 1px, transparent 2px),
+    radial-gradient(circle at 49% 77%, rgba(255, 255, 255, 0.06) 0 1px, transparent 2px),
+    radial-gradient(circle at 31% 62%, rgba(0, 0, 0, 0.1) 0 1px, transparent 2px),
+    radial-gradient(circle at 88% 12%, rgba(0, 0, 0, 0.11) 0 1px, transparent 2px);
+  background-size: 120px 120px;
+  filter: blur(0.2px) contrast(115%);
+  animation: grainShift 7s steps(10, end) infinite;
+}
 
-      @keyframes grainShift {
-        0% { transform: translate3d(-2%, -1%, 0); }
-        12% { transform: translate3d(1%, -3%, 0); }
-        28% { transform: translate3d(-3%, 2%, 0); }
-        44% { transform: translate3d(3%, 1%, 0); }
-        63% { transform: translate3d(-1%, 3%, 0); }
-        82% { transform: translate3d(2%, -2%, 0); }
-        100% { transform: translate3d(-2%, -1%, 0); }
-      }
+@keyframes grainShift {
+  0% {
+    transform: translate3d(-2%, -1%, 0);
+  }
+  12% {
+    transform: translate3d(1%, -3%, 0);
+  }
+  28% {
+    transform: translate3d(-3%, 2%, 0);
+  }
+  44% {
+    transform: translate3d(3%, 1%, 0);
+  }
+  63% {
+    transform: translate3d(-1%, 3%, 0);
+  }
+  82% {
+    transform: translate3d(2%, -2%, 0);
+  }
+  100% {
+    transform: translate3d(-2%, -1%, 0);
+  }
+}
 
-      /* ビネット（周辺減光） */
-      .fx::after {
-        content: "";
-        position: absolute;
-        inset: 0;
-        pointer-events: none;
-        z-index: 1;
-        opacity: var(--vignette);
-        background:
-          radial-gradient(
-            120% 95% at 50% 44%,
-            rgba(0,0,0,0.00) 0%,
-            rgba(0,0,0,0.00) 52%,
-            rgba(0,0,0,0.38) 72%,
-            rgba(0, 0, 0, 0.72) 100%
-          );
-        mix-blend-mode: multiply;
-      }
+.fx::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  opacity: var(--vignette);
+  background: radial-gradient(130% 96% at 50% 40%, transparent 0%, transparent 43%, rgba(0, 0, 0, 0.5) 71%, rgba(0, 0, 0, 0.88) 100%);
+  mix-blend-mode: multiply;
+}
 
-      @media (prefers-reduced-motion: reduce) {
-        .fx::before { animation: none; }
-      }
+.fx .dim {
+  position: absolute;
+  inset: 0;
+  background: rgba(7, 6, 10, 0.42);
+}
 
-      .fx .dim {
-        position: absolute;
-        inset: 0;
-        background: rgba(26, 11, 31, 0.481);
-        backdrop-filter: blur(0px);
-        -webkit-backdrop-filter: blur(0px);
-      }
+.fx .glow {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(170px 145px at var(--mx, 50%) var(--my, 50%), rgba(70, 145, 255, calc(0.52 * var(--glow, 1))), rgba(32, 90, 214, calc(0.16 * var(--glow, 1))) 40%, transparent 72%),
+    radial-gradient(460px 360px at var(--mx, 50%) var(--my, 50%), rgba(20, 82, 214, calc(0.2 * var(--glow, 1))), rgba(12, 48, 150, calc(0.06 * var(--glow, 1))) 50%, transparent 82%);
+  mix-blend-mode: screen;
+  filter: blur(6px) saturate(1.1);
+}
 
-      .fx .glow {
-        position: absolute;
-        inset: 0;
-        /* JSで --mx/--my を更新。周辺だけぼんやり発光 */
-        background:
-          /* 中心の強い光（蛍の芯） */
-          radial-gradient(
-            160px 140px at var(--mx, 50%) var(--my, 50%),
-            rgba(210, 255, 180, calc(0.55 * var(--glow, 1))),
-            rgba(210, 255, 180, calc(0.18 * var(--glow, 1))) 35%,
-            rgba(0, 0, 0, 0.00) 72%
-          ),
-          /* 外側のぼんやりしたハロー */
-          radial-gradient(
-            420px 340px at var(--mx, 50%) var(--my, 50%),
-            rgba(120, 255, 210, calc(0.18 * var(--glow, 1))),
-            rgba(120, 255, 210, calc(0.05 * var(--glow, 1))) 50%,
-            rgba(102, 102, 102, 0) 80%
-          );
-        mix-blend-mode: screen;
-        filter: blur(6px) saturate(1.15);
-        opacity: 1;
-        transition: opacity 120ms ease;
-      }
+.frame {
+  position: absolute;
+  inset: 16px;
+  border-radius: 26px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  outline: 1px solid rgba(202, 163, 106, 0.18);
+  outline-offset: 7px;
+}
 
-      /* 画面に薄いフレーム感 */
-      .frame {
-        position: absolute;
-        inset: 16px;
-        border: 1px solid rgba(255, 255, 255, 0.07);
-        outline: 1px solid rgba(184, 134, 255, 0.08);
-        outline-offset: 6px;
-        pointer-events: none;
-        border-radius: 22px;
-      }
+.brand {
+  position: absolute;
+  top: 2px;
+  left: 12px;
+  pointer-events: auto;
+}
 
-      .brand {
-        position: absolute;
-        top: -10px;
-        left: 15px;
-        pointer-events: auto;
-        display: flex;
-        align-items: center;
-      }
+.brandLogo {
+  width: min(290px, 52vw);
+  height: auto;
+  display: block;
+  filter: drop-shadow(0 12px 26px rgba(0, 0, 0, 0.5));
+  user-select: none;
+  -webkit-user-drag: none;
+}
 
-      .brandLogo {
-  width: min(270px, 48vw);
-        height: auto;
-        display: block;
-        opacity: 0.96;
-        image-rendering: -webkit-optimize-contrast;
-        filter: drop-shadow(0 10px 22px rgba(0, 0, 0, 0.42));
-        user-select: none;
-        -webkit-user-drag: none;
-      }
+.infoToggle {
+  position: fixed;
+  top: 18px;
+  right: 24px;
+  z-index: 45;
+  display: none;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 1px solid rgba(202, 163, 106, 0.78);
+  border-radius: 50%;
+  color: rgba(255, 231, 177, 0.94);
+  background: rgba(25, 18, 28, 0.72);
+  box-shadow: 0 7px 18px rgba(0, 0, 0, 0.4), inset 0 0 0 2px rgba(202, 163, 106, 0.12);
+  backdrop-filter: blur(7px);
+  -webkit-backdrop-filter: blur(7px);
+  font-family: var(--font-display);
+  font-size: 21px;
+  font-style: italic;
+  line-height: 1;
+  cursor: pointer;
+  pointer-events: auto;
+  transition: color 160ms ease, background 160ms ease, border-color 160ms ease, transform 160ms ease;
+}
 
-      .side {
-        position: absolute;
-        top: 120px;
-        left: 22px;
-        width: 240px;
-        padding: 18px;
-        pointer-events: auto;
-        border-radius: 18px;
-        background: linear-gradient(180deg, rgba(40, 28, 60, 0.55), rgba(20, 14, 30, 0.35));
-        border: 1px solid var(--border);
-        box-shadow: 0 18px 60px rgba(0, 0, 0, 0.45);
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
-      }
+.infoToggle:hover,
+.infoToggle:focus-visible,
+.infoClose:hover,
+.infoClose:focus-visible {
+  color: #fff8ea;
+  border-color: rgba(255, 231, 177, 0.95);
+  background: rgba(90, 40, 79, 0.86);
+}
 
-      .nav {
-        display: grid;
-        gap: 10px;
-        margin-top: 6px;
-      }
+.infoToggle:hover {
+  transform: translateY(-1px);
+}
 
-      .nav a {
-        text-decoration: none;
-        color: var(--text);
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 12px 12px;
-        border-radius: 14px;
-        border: 1px solid var(--border-2);
-        background: rgba(255, 255, 255, 0.03);
-        transition: transform 120ms ease, background 120ms ease, border-color 120ms ease;
-      }
+.infoToggle:focus-visible,
+.infoClose:focus-visible {
+  outline: 1px solid #fff0bd;
+  outline-offset: 3px;
+}
 
-      .nav a:hover {
-        transform: translateX(2px);
-        background: rgba(184, 134, 255, 0.10);
-        border-color: rgba(184, 134, 255, 0.25);
-      }
+.announcementRail {
+  position: fixed;
+  left: 50%;
+  bottom: 18px;
+  z-index: 40;
+  width: min(720px, calc(100vw - 48px));
+  transform: translateX(-50%);
+  pointer-events: auto;
+  filter: drop-shadow(0 14px 26px rgba(0, 0, 0, 0.48));
+}
 
-      .nav a .jp {
-        font-size: 11px;
-        color: var(--muted);
-        letter-spacing: 0.06em;
-      }
+.announcementViewport {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(255, 231, 177, 0.65);
+  border-radius: 13px;
+  background: #24142c;
+}
 
-      .nav a .label {
-        font-weight: 800;
-        letter-spacing: 0.04em;
-      }
+.announcementTrack {
+  display: flex;
+  width: 100%;
+  transition: transform 520ms cubic-bezier(0.22, 1, 0.36, 1);
+}
 
-      .side .note {
-        margin-top: 14px;
-        padding-top: 12px;
-        border-top: 1px dashed rgba(184, 134, 255, 0.20);
-        font-size: 12px;
-        line-height: 1.7;
-        color: var(--muted);
-      }
+.announcementRail::before {
+  content: "NEWS";
+  position: absolute;
+  top: -9px;
+  left: 16px;
+  z-index: 3;
+  padding: 2px 9px;
+  color: #28151b;
+  background: #f3d58f;
+  border-radius: 4px;
+  font-family: var(--font-ui);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+}
 
-      .hud {
-        position: absolute;
-        right: 22px;
-        top: 110px;
-        width: 280px;
-        display: grid;
-        gap: 14px;
-        pointer-events: auto;
-      }
+.announcementBanner {
+  position: relative;
+  flex: 0 0 100%;
+  display: block;
+  min-height: 112px;
+  overflow: hidden;
+  color: #fff8ea;
+  text-decoration: none;
+  background: #24142c;
+  isolation: isolate;
+}
 
-      .panel {
-        border-radius: 18px;
-        background: linear-gradient(180deg, rgba(40, 28, 60, 0.45), rgba(20, 14, 30, 0.28));
-        border: 1px solid var(--border);
-        box-shadow: 0 18px 60px rgba(0, 0, 0, 0.45);
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
-        padding: 14px 14px 12px;
-        color: var(--text);
-      }
+.announcementBanner.is-active {
+  display: block;
+}
 
-      .panel h3 {
-        margin: 0 0 10px 0;
-        font-size: 12px;
-        letter-spacing: 0.22em;
-        text-transform: uppercase;
-        color: rgba(244, 241, 255, 0.75);
-        font-weight: 900;
-      }
+.announcementArrow {
+  position: absolute;
+  top: 50%;
+  z-index: 4;
+  width: 30px;
+  height: 42px;
+  padding: 0;
+  transform: translateY(-50%);
+  border: 1px solid rgba(255, 231, 177, 0.6);
+  border-radius: 6px;
+  color: #fff8ea;
+  background: rgba(20, 12, 27, 0.7);
+  font-family: Georgia, serif;
+  font-size: 27px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 160ms ease, color 160ms ease;
+}
+
+.announcementArrow:hover,
+.announcementArrow:focus-visible {
+  color: #28151b;
+  background: #f3d58f;
+}
+
+.announcementArrow:focus-visible,
+.announcementDot:focus-visible {
+  outline: 1px solid #fff0bd;
+  outline-offset: 3px;
+}
+
+.announcementArrow--prev {
+  left: 10px;
+}
+
+.announcementArrow--next {
+  right: 10px;
+}
+
+.announcementDots {
+  position: absolute;
+  right: 14px;
+  bottom: 10px;
+  z-index: 4;
+  display: flex;
+  gap: 6px;
+}
+
+.announcementDot {
+  width: 7px;
+  height: 7px;
+  padding: 0;
+  border: 1px solid rgba(255, 248, 234, 0.8);
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+}
+
+.announcementDot.is-active {
+  background: #f3d58f;
+  border-color: #f3d58f;
+}
+
+.announcementBanner::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(90deg, rgba(10, 8, 18, 0.86), rgba(22, 12, 33, 0.42));
+}
+
+.announcementBanner img {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.72;
+}
+
+.announcementBanner__copy {
+  display: flex;
+  min-height: 112px;
+  box-sizing: border-box;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 5px;
+  padding: 14px 72px 14px 64px;
+}
+
+.announcementBanner__eyebrow,
+.announcementBanner__action {
+  font-family: var(--font-display);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+}
+
+.announcementBanner__eyebrow {
+  color: rgba(255, 231, 177, 0.9);
+}
+
+.announcementBanner strong {
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.45;
+  letter-spacing: 0.06em;
+}
+
+.announcementBanner__action {
+  color: rgba(255, 248, 234, 0.78);
+}
+
+.announcementBanner:hover,
+.announcementBanner:focus-visible {
+  border-color: rgba(255, 239, 198, 0.95);
+}
+
+.announcementBanner:focus-visible {
+  outline: 1px solid rgba(255, 239, 198, 0.95);
+  outline-offset: -4px;
+}
+
+/* Keep the ad visually separate from the page controls. */
+.announcementRail {
+  isolation: isolate;
+}
+
+/* Legacy banner declarations are intentionally overridden above. */
+.announcementRail--legacy {
+  z-index: 4;
+}
+
+.hero {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.heroCopy {
+  position: absolute;
+  top: 92px;
+  left: 32px;
+  max-width: min(460px, 62vw);
+  padding: 18px 20px;
+  border-radius: 16px;
+  border: 1px solid rgba(202, 163, 106, 0.25);
+  background: linear-gradient(170deg, rgba(16, 12, 18, 0.58), rgba(12, 9, 14, 0.38));
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(7px);
+  -webkit-backdrop-filter: blur(7px);
+  pointer-events: auto;
+}
+
+.heroCopy h1 {
+  margin: 0;
+  font-size: clamp(20px, 2.2vw, 31px);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.heroCopy p {
+  margin: 11px 0 0;
+  line-height: 1.8;
+  color: var(--muted);
+  font-size: clamp(12px, 1.2vw, 14px);
+}
+
+.tableWrap {
+  position: absolute;
+  left: 0;
+  bottom: -30vh;
+  width: 100%;
+  height: 70vh;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.fortuneDesk {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  margin: 0;
+  width: min(1180px, 108vw);
+  height: 100%;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  border: 1px solid rgba(202, 163, 106, 0.4);
+  background:
+    radial-gradient(ellipse at 50% 12%, rgba(116, 145, 174, 0.16), transparent 44%),
+    linear-gradient(115deg, rgba(7, 18, 36, 0.18), transparent 42%, rgba(4, 10, 24, 0.3)),
+    linear-gradient(140deg, var(--velvet-blue-1), var(--velvet-blue-2));
+  box-shadow:
+    0 -22px 42px rgba(0, 0, 0, 0.52),
+    0 20px 36px rgba(0, 0, 0, 0.38),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    inset 0 -10px 24px rgba(0, 0, 0, 0.4);
+  overflow: visible;
+  pointer-events: auto;
+}
+
+.fortuneDesk::before {
+  content: "";
+  position: absolute;
+  left: 3%;
+  right: 3%;
+  top: 3%;
+  bottom: 3%;
+  border-radius: 50%;
+  border: 1px solid rgba(202, 163, 106, 0.2);
+  background:
+    radial-gradient(ellipse at 50% 8%, rgba(116, 145, 174, 0.08), transparent 48%),
+    linear-gradient(140deg, rgba(63, 34, 86, 0.72), rgba(31, 8, 30, 0.82));
+}
 
 
-      .bar {
-        height: 6px;
-        border-radius: 999px;
-        background: rgba(255, 255, 255, 0.08);
-        overflow: hidden;
-        border: 1px solid rgba(255, 255, 255, 0.08);
-      }
+.tableGlow {
+  position: absolute;
+  left: 50%;
+  top: 22%;
+  width: min(540px, 78vw);
+  height: min(240px, 32vh);
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(202, 163, 106, 0.4), rgba(202, 163, 106, 0.1) 44%, transparent 70%);
+  filter: blur(4px);
+  opacity: 0.85;
+}
 
-      .bar > i {
-        display: block;
-        height: 100%;
-        width: var(--w);
-        background: linear-gradient(90deg, rgba(184, 134, 255, 0.9), rgba(184, 134, 255, 0.25));
-      }
+.cardNav {
+  position: absolute;
+  left: 50%;
+  top: clamp(34px, 7vh, 72px);
+  margin-top: -140px;
+  transform: translateX(-50%);
+  width: min(980px, calc(100% - 44px));
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  gap: clamp(6px, 1vw, 14px);
+  z-index: 3;
+  pointer-events: none;
+}
 
-      .links {
-        position: absolute;
-        right: 22px;
-        bottom: 22px;
-        pointer-events: auto;
-        display: flex;
-        gap: 12px;
-      }
+.cardBtn {
+  --suit-color: #24140f;
+  position: relative;
+  width: clamp(104px, 11.6vw, 150px);
+  min-height: clamp(146px, 16.5vw, 200px);
+  border-radius: 12px;
+  border: 1px solid rgba(40, 26, 17, 0.65);
+  text-decoration: none;
+  color: var(--card-ink);
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.88), transparent 32%),
+    var(--card);
+  box-shadow:
+    0 16px 22px rgba(0, 0, 0, 0.38),
+    inset 0 0 0 4px var(--card),
+    inset 0 0 0 5px rgba(40, 26, 17, 0.8);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 16px 14px;
+  box-sizing: border-box;
+  pointer-events: auto;
+  transition: transform 260ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 260ms ease;
+}
+
+.cardBtn::before,
+.cardBtn::after {
+  content: attr(data-suit);
+  position: absolute;
+  font-size: 17px;
+  line-height: 1;
+  color: var(--suit-color);
+}
+
+.cardBtn::before {
+  top: 10px;
+  left: 12px;
+}
+
+.cardBtn::after {
+  right: 12px;
+  bottom: 10px;
+  transform: rotate(180deg);
+}
+
+.cardBtn .meta {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: rgba(33, 18, 14, 0.66);
+}
+
+.cardBtn .label {
+  margin-top: 12px;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+.cardBtn .lead {
+  align-self: flex-end;
+  font-size: 20px;
+  color: var(--suit-color);
+}
+
+.cardBtn .centerSuit {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 42px;
+  color: var(--suit-color);
+  opacity: 0.14;
+}
+
+.cardBtn.imageCard {
+  overflow: hidden;
+  padding: 0;
+  background: #d7d7d7;
+}
+
+.cardBtn.imageCard .cardArtwork {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 260ms ease, filter 260ms ease;
+}
+
+.cardBtn.imageCard .cardHint {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: 8px;
+  z-index: 1;
+  padding: 8px 7px 7px;
+  border-left: 3px solid var(--suit-color);
+  background: rgba(12, 9, 14, 0.78);
+  color: #fff8ea;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: 0.08em;
+  text-align: center;
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 180ms ease, transform 180ms ease;
+}
+
+.cardBtn.imageCard .meta,
+.cardBtn.imageCard .label,
+.cardBtn.imageCard .lead,
+.cardBtn.imageCard .centerSuit,
+.cardBtn.imageCard::before,
+.cardBtn.imageCard::after {
+  display: none;
+}
+
+.cardBtn:nth-child(1) {
+  transform: rotate(-12deg) translateY(7px);
+}
+
+.cardBtn:nth-child(2) {
+  transform: rotate(-6deg) translateY(2px);
+}
+
+.cardBtn:nth-child(3) {
+  transform: rotate(0deg) translateY(-2px);
+  z-index: 2;
+}
+
+.cardBtn:nth-child(4) {
+  transform: rotate(7deg) translateY(2px);
+}
+
+.cardBtn:nth-child(5) {
+  transform: rotate(13deg) translateY(7px);
+}
+
+.cardBtn:hover,
+.cardBtn:focus-visible {
+  transform: translateY(-18px) scale(1.03);
+  box-shadow:
+    0 24px 34px rgba(0, 0, 0, 0.45),
+    0 0 20px rgba(255, 230, 166, 0.35),
+    inset 0 0 0 4px #fff8ea,
+    inset 0 0 0 5px rgba(40, 26, 17, 0.82);
+}
+
+.cardBtn.imageCard:hover .cardArtwork,
+.cardBtn.imageCard:focus-visible .cardArtwork {
+  filter: brightness(0.72) saturate(1.12);
+  transform: scale(1.04);
+}
+
+.cardBtn.imageCard:hover .cardHint,
+.cardBtn.imageCard:focus-visible .cardHint {
+  opacity: 1;
+  transform: translateY(0);
+}
 
 
-      .hint {
-        position: absolute;
-        bottom: 22px;
-        left: 50%;
-        transform: translateX(-50%);
-        pointer-events: none;
-        color: rgba(244, 241, 255, 0.65);
-        background: rgba(10, 8, 16, 0.35);
-        border: 1px solid rgba(184, 134, 255, 0.14);
-        border-radius: 999px;
-        padding: 10px 14px;
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
-        font-size: 12px;
-      }
 
-     @media (max-width: 720px) {
+.hud {
+  position: absolute;
+  right: 22px;
+  top: 110px;
+  width: 290px;
+  pointer-events: auto;
+}
 
-  /* ロゴ */
-  .brand{
-    top:0;
-    left:50%;
-    transform:translateX(-50%);
+.panel {
+  border-radius: 18px;
+  background: linear-gradient(180deg, rgba(25, 18, 28, 0.68), rgba(14, 9, 18, 0.44));
+  border: 1px solid rgba(202, 163, 106, 0.3);
+  box-shadow: 0 18px 52px rgba(0, 0, 0, 0.42);
+  backdrop-filter: blur(9px);
+  -webkit-backdrop-filter: blur(9px);
+  padding: 14px 14px 12px;
+}
+
+.panel h3 {
+  margin: 0 0 10px;
+  font-size: 12px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(247, 240, 221, 0.77);
+}
+
+.panelHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.panelHeader h3 {
+  margin-bottom: 10px;
+}
+
+.infoClose {
+  display: none;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 1px solid rgba(255, 231, 177, 0.55);
+  border-radius: 50%;
+  color: var(--text);
+  background: rgba(20, 12, 27, 0.56);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+@media (max-width: 980px) {
+  .announcementRail {
+    width: min(720px, calc(100vw - 32px));
   }
 
-  .brandLogo{
-    width:min(200px,70vw);
+  .announcementBanner {
+    min-height: 92px;
   }
 
-  /* Informationは非表示 */
-  .hud{
-    display:none;
+  .announcementBanner__copy {
+    min-height: 92px;
   }
 
-
-
-  .nav a{
-    padding:10px;
+  .heroCopy {
+    top: 78px;
+    left: 20px;
+    right: 20px;
+    max-width: none;
   }
 
-  .nav .label{
-    font-size:14px;
+  .hud {
+    display: none;
   }
 
-  .nav .jp{
-    font-size:10px;
+  .hud.is-open {
+    display: block;
   }
 
-  .links{
-    right:12px;
-    bottom:140px;
+  .fortuneDesk {
+    width: 114vw;
   }
 
-  .frame{
-    inset:10px;
+  .cardBtn {
+    width: clamp(98px, 12.8vw, 136px);
+    min-height: clamp(134px, 18vw, 178px);
   }
 
+  .cardBtn .label {
+    font-size: 14px;
+  }
 }
 
-/* ハンバーガーボタン */
-.menuButton{
-    display:none;
-    position:absolute;
-    top:20px;
-    right:20px;
-    width:52px;
-    height:52px;
-    border:none;
-    border-radius:16px;
-    background:rgba(40,28,60,.6);
-    backdrop-filter:blur(10px);
-    border:1px solid var(--border);
-    z-index:100;
-    cursor:pointer;
-    pointer-events:auto;
+@media (max-width: 720px) {
+  .infoClose {
+    display: block;
+  }
 
-    flex-direction:column;
-    justify-content:center;
-    align-items:center;
-    gap:6px;
+  .infoToggle {
+    display: block;
+    top: 16px;
+    right: 18px;
+  }
+
+  .frame {
+    inset: 10px;
+    border-radius: 20px;
+  }
+
+  .brand {
+    top: 4px;
+    left: -20px;
+    transform: none;
+  }
+
+  .brandLogo {
+    width: min(180px, 48vw);
+  }
+
+  .cardNav {
+    margin-top: -110px;
+  }
+
+  .announcementRail {
+    top: auto;
+    right: auto;
+    bottom: 10px;
+    left: 50%;
+    width: calc(100vw - 20px);
+  }
+
+  .announcementBanner {
+    min-height: 82px;
+    border-radius: 10px;
+  }
+
+  .announcementBanner__copy {
+    min-height: 82px;
+    gap: 3px;
+    padding: 10px 54px 10px 48px;
+  }
+
+  .announcementBanner__eyebrow,
+  .announcementBanner__action {
+    font-size: 8px;
+    letter-spacing: 0.08em;
+  }
+
+  .announcementBanner strong {
+    font-size: 11px;
+    letter-spacing: 0.03em;
+  }
+
+  .hud.is-open {
+    display: block;
+    top: 190px;
+    right: 14px;
+    left: 14px;
+    width: auto;
+  }
+
+  .heroCopy {
+    top: 74px;
+    left: 14px;
+    right: 14px;
+    padding: 14px 14px;
+  }
+
+  .heroCopy p {
+    line-height: 1.6;
+  }
+
+  .tableWrap {
+    bottom: -30vh;
+    height: 72vh;
+    padding: 0;
+  }
+
+  .fortuneDesk {
+    width: 148vw;
+  }
+
+  .cardNav {
+    position: absolute;
+    left: 50%;
+    top: 0px;
+    width: min(100vw, calc(100% - 20px));
+    transform: translateX(-50%);
+    padding: 44px 10px 0;
+    box-sizing: border-box;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0px;
+  }
+
+  .cardBtn,
+  .cardBtn:nth-child(1),
+  .cardBtn:nth-child(2),
+  .cardBtn:nth-child(3),
+  .cardBtn:nth-child(4),
+  .cardBtn:nth-child(5),
+  .cardBtn:hover,
+  .cardBtn:focus-visible {
+    width: 100%;
+    min-height: 128px;
+    transform: none;
+    box-shadow:
+      0 10px 16px rgba(0, 0, 0, 0.34),
+      inset 0 0 0 4px var(--card),
+      inset 0 0 0 5px rgba(40, 26, 17, 0.8);
+  }
+
+  .cardBtn:last-child {
+    grid-column: 1 / -1;
+  }
+
+  .cardBtn .centerSuit {
+    font-size: 40px;
+  }
 }
 
-.menuButton span{
-    width:24px;
-    height:2px;
-    background:white;
-    border-radius:999px;
+@media (prefers-reduced-motion: reduce) {
+  .fx::before {
+    animation: none;
+  }
+
+  .cardBtn {
+    transition: none;
+  }
+
+  .announcementBanner {
+    transition: none;
+  }
 }
 
 
-@media (max-width:720px){
+/* =========================================================
+   UNIFIED TYPOGRAPHY / GOTHIC ANTIQUE THEME
+   Font + ornaments + headings + card titles + English letters
+   ========================================================= */
 
-    /* ハンバーガーボタン表示 */
-    .menuButton{
-        display:flex;
-    }
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;600&family=Noto+Serif+JP:wght@400;500;600;700&display=swap');
 
-    /* Information非表示 */
-    .hud{
-        display:none;
-    }
+:root {
+  --font-display: "Cormorant Garamond", "Noto Serif JP",
+    "Yu Mincho", "Hiragino Mincho ProN", serif;
+  --font-serif-jp: "Noto Serif JP", "Yu Mincho",
+    "Hiragino Mincho ProN", serif;
+  --font-ui: "Noto Sans JP", "Hiragino Kaku Gothic ProN",
+    "Yu Gothic", sans-serif;
 
-    /* メニュー全画面化 */
-    .side{
-    position:fixed;
-    inset:0;
-
-    display:flex;
-
-    /* ↓ここを変更 */
-    justify-content:flex-start;
-    align-items:center;
-
-    background:rgba(8,5,15,.95);
-    backdrop-filter:blur(30px);
-
-    border:none;
-    border-radius:0;
-
-    opacity:0;
-    visibility:hidden;
-    transition:.3s;
-
-    z-index:100;
-
-    overflow-y:auto;      /* 追加 */
-    padding-top:100px;    /* 追加 */
-    padding-bottom:40px;  /* 追加 */
+  --ornament: rgba(202, 163, 106, 0.68);
+  --ornament-soft: rgba(202, 163, 106, 0.24);
+  --cream: #f7f0dd;
 }
 
-    .side.open{
-        opacity:1;
-        visibility:visible;
-    }
-
-    /* 縦並び */
-    .nav{
-    display:flex;
-    flex-direction:column;
-
-    width:80%;
-    max-width:350px;
-
-    gap:18px;
+/* 基本文字 */
+html,
+body {
+  font-family: var(--font-serif-jp);
+  font-feature-settings: "palt", "kern";
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
-    .nav a{
-        padding:18px;
-        font-size:18px;
-    }
+/* ---------------------------------------------------------
+   Hero heading
+   --------------------------------------------------------- */
+
+.heroCopy {
+  position: absolute;
+  isolation: isolate;
 }
 
-.menuButton{
-    z-index:101;
+.heroCopy::before {
+  content: "✦";
+  position: absolute;
+  top: -13px;
+  left: 1px;
+  color: var(--ornament);
+  font-family: var(--font-display);
+  font-size: 13px;
+  line-height: 1;
+  text-shadow: 0 0 12px rgba(202, 163, 106, 0.28);
 }
 
-.menuButton span{
-    transition:.3s;
+.heroCopy::after {
+  content: "";
+  position: absolute;
+  left: 20px;
+  bottom: -8px;
+  width: 92px;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    var(--ornament),
+    rgba(202, 163, 106, 0)
+  );
 }
 
-.menuButton.open span:nth-child(1){
-    transform:translateY(8px) rotate(45deg);
+.heroCopy h1 {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(26px, 2.7vw, 39px);
+  font-weight: 500;
+  line-height: 1.25;
+  letter-spacing: 0.12em;
+  color: var(--cream);
+  text-shadow:
+    0 2px 12px rgba(0, 0, 0, 0.55),
+    0 0 24px rgba(202, 163, 106, 0.13);
 }
 
-.menuButton.open span:nth-child(2){
-    opacity:0;
+.heroCopy h1::before {
+  content: "";
+  width: 24px;
+  height: 1px;
+  flex: 0 0 24px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--ornament)
+  );
 }
 
-.menuButton.open span:nth-child(3){
-    transform:translateY(-8px) rotate(-45deg);
+.heroCopy p {
+  max-width: 42em;
+  margin: 16px 0 0;
+  padding-left: 38px;
+  font-family: var(--font-serif-jp);
+  font-size: clamp(12px, 1.1vw, 14px);
+  font-weight: 400;
+  line-height: 2;
+  letter-spacing: 0.075em;
+  color: rgba(247, 240, 221, 0.78);
+}
+
+/* ---------------------------------------------------------
+   Tarot card typography
+   --------------------------------------------------------- */
+
+.cardBtn {
+  font-family: var(--font-display);
+  font-feature-settings: "kern";
+}
+
+.cardBtn .meta {
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(33, 18, 14, 0.58);
+}
+
+.cardBtn .label {
+  position: relative;
+  margin-top: 12px;
+  padding: 0 7px;
+  font-family: var(--font-serif-jp);
+  font-size: clamp(16px, 1.35vw, 20px);
+  font-weight: 600;
+  line-height: 1.5;
+  letter-spacing: 0.13em;
+  text-align: center;
+  color: var(--card-ink);
+}
+
+/* カードタイトル上下の細い装飾 */
+.cardBtn .label::before,
+.cardBtn .label::after {
+  content: "";
+  display: block;
+  width: 26px;
+  height: 1px;
+  margin: 0 auto 7px;
+  background: rgba(40, 26, 17, 0.34);
+}
+
+.cardBtn .label::after {
+  margin: 7px auto 0;
+  opacity: 0.7;
+}
+
+/* カード内の英字・数字 */
+.cardBtn .meta,
+.cardBtn .lead {
+  font-family: var(--font-display);
+  font-feature-settings: "kern";
+}
+
+/* スート */
+.cardBtn::before,
+.cardBtn::after,
+.cardBtn .centerSuit {
+  font-family: var(--font-display);
+}
+
+/* ---------------------------------------------------------
+   Image card
+   --------------------------------------------------------- */
+
+.cardBtn.imageCard .cardHint {
+  font-family: var(--font-serif-jp);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.65;
+  letter-spacing: 0.12em;
+  text-shadow: 0 1px 7px rgba(0, 0, 0, 0.55);
+}
+
+.cardBtn.imageCard .cardHint::before {
+  content: "✦  ";
+  font-family: var(--font-display);
+  color: var(--ornament);
+  font-size: 11px;
+}
+
+/* ---------------------------------------------------------
+   HUD / panel headings
+   --------------------------------------------------------- */
+
+.panel h3 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 12px;
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(247, 240, 221, 0.82);
+}
+
+.panel h3::before,
+.panel h3::after {
+  content: "";
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--ornament-soft)
+  );
+}
+
+.panel h3::before {
+  width: 18px;
+}
+
+.panel h3::after {
+  flex: 1;
+}
+
+/* UI文字 */
+.ui button,
+.ui input,
+.ui select,
+.ui textarea {
+  font-family: var(--font-ui);
+  font-feature-settings: "palt", "kern";
+}
+
+/* ---------------------------------------------------------
+   English / small labels
+   --------------------------------------------------------- */
+
+.cardBtn .meta,
+.panel h3,
+.english,
+[data-en] {
+  font-family: var(--font-display);
+  font-weight: 500;
+  letter-spacing: 0.2em;
+}
+
+/* ---------------------------------------------------------
+   Focus state
+   --------------------------------------------------------- */
+
+.cardBtn:focus-visible {
+  outline: 1px solid rgba(202, 163, 106, 0.8);
+  outline-offset: 5px;
+}
+
+/* ---------------------------------------------------------
+   Mobile
+   --------------------------------------------------------- */
+
+@media (max-width: 720px) {
+  .heroCopy h1 {
+    font-size: 25px;
+    letter-spacing: 0.095em;
+  }
+
+  .heroCopy h1::before {
+    width: 16px;
+    flex-basis: 16px;
+  }
+
+  .heroCopy p {
+    padding-left: 27px;
+    font-size: 12px;
+    line-height: 1.9;
+    letter-spacing: 0.055em;
+  }
+
+  .heroCopy::after {
+    left: 14px;
+    width: 68px;
+  }
+
+  .cardBtn .label {
+    font-size: 16px;
+    letter-spacing: 0.09em;
+  }
+
+  .cardBtn .label::before,
+  .cardBtn .label::after {
+    width: 20px;
+  }
+
+  .cardBtn .meta {
+    font-size: 9px;
+    letter-spacing: 0.16em;
+  }
+
+  .cardBtn.imageCard .cardHint {
+    font-size: 11px;
+    letter-spacing: 0.08em;
+  }
+
+  .panel h3 {
+    font-size: 11px;
+  }
 }

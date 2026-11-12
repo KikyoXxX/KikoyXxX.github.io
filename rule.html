@@ -62,9 +62,12 @@
 
 /* ---- フッター ---- */
 .footer {
+    position: relative;
+    z-index: 1;
+    padding: 46px 24px 34px;
+    border-top: 1px solid rgba(184, 164, 119, 0.28);
+    background: rgba(6, 9, 20, 0.72);
     text-align: center;
-    padding: 30px;
-    opacity: 0.7;
 }
 
 .back {
@@ -72,6 +75,56 @@
     text-decoration: none;
     border-bottom: 1px solid #e8d6ff;
     padding-bottom: 2px;
+}
+
+.site-map-title {
+    margin: 0 0 18px;
+    color: #b8a477;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 0.72rem;
+    font-weight: 400;
+    letter-spacing: 0.32em;
+}
+
+.site-map {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px 24px;
+    max-width: 760px;
+    margin: 0 auto 28px;
+    padding: 0;
+    list-style: none;
+}
+
+.site-map a {
+    display: inline-block;
+    padding: 5px 0;
+    border-bottom: 0;
+    color: rgba(241, 236, 223, 0.78);
+    font-size: 0.8rem;
+    letter-spacing: 0.08em;
+    text-decoration: none;
+    transition: color 180ms ease, transform 180ms ease;
+}
+
+.site-map a:hover,
+.site-map a:focus-visible {
+    color: #f1ecdf;
+    transform: translateY(-2px);
+}
+
+.site-map a:focus-visible {
+    outline: 1px solid #b8a477;
+    outline-offset: 4px;
+}
+
+.footer-signature {
+    margin: 0;
+    color: rgba(213, 220, 244, 0.52);
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 0.75rem;
+    letter-spacing: 0.18em;
 }
 </style>
 </head>
@@ -90,7 +143,10 @@
             仰々しく利用規約を書きましたが、禁止事項さえしないでくれればかなり自由に扱っていただけます。
             周りの方に迷惑をかけることが一番嫌なので、それだけは本当にお願いします。
         </p>
-    </section>
+        <p>
+            迷ったときは直接桔梗にご相談ください。X(旧Twitter)のDM、youtubeのチャンネルコミュニティなどをご利用ください。
+        </p>
+        </section>
 
     <section class="terms-block">
         <h2>第1条（適用）</h2>
@@ -136,7 +192,17 @@
 </main>
 
 <footer class="footer">
-    <a href="index.html" class="back">← トップページに戻る</a>
+    <h2 class="site-map-title">SITE MAP</h2>
+    <nav aria-label="サイトマップ">
+        <ul class="site-map">
+            <li><a href="index.html">トップページ</a></li>
+            <li><a href="character.html">キャラクター</a></li>
+            <li><a href="meu.html">愛生</a></li>
+            <li><a href="suzune.html">鈴音</a></li>
+            <li><a href="sakamaki.html">逆巻</a></li>
+        </ul>
+    </nav>
+    <p class="footer-signature">Kikyo</p>
 </footer>
 
 </body>

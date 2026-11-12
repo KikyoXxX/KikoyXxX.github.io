@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 360" role="img" aria-labelledby="title desc">
+  <title id="title">Banner placeholder</title>
+  <desc id="desc">A temporary decorative background for the announcement banner.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#6a315c"/>
+      <stop offset="0.55" stop-color="#2e2553"/>
+      <stop offset="1" stop-color="#0e203b"/>
+    </linearGradient>
+    <radialGradient id="light" cx="78%" cy="18%" r="75%">
+      <stop offset="0" stop-color="#ffe9ac" stop-opacity="0.7"/>
+      <stop offset="1" stop-color="#ffe9ac" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="800" height="360" fill="url(#bg)"/>
+  <rect width="800" height="360" fill="url(#light)"/>
+  <path d="M-20 292 C180 190 286 342 450 244 S706 118 830 186" fill="none" stroke="#f4d99a" stroke-opacity="0.42" stroke-width="2"/>
+  <path d="M-30 320 C168 218 292 365 464 270 S704 148 830 210" fill="none" stroke="#f4d99a" stroke-opacity="0.16" stroke-width="12"/>
+  <circle cx="676" cy="70" r="5" fill="#fff3c9"/>
+  <circle cx="718" cy="112" r="2.5" fill="#fff3c9"/>
+  <circle cx="604" cy="118" r="3" fill="#fff3c9"/>
+</svg>

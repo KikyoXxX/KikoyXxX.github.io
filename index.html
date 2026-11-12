@@ -1,10 +1,26 @@
 <html>
   <head>
   <meta charset="UTF-8" />
-  <title>桔梗HP</title>
+  <title>花占い屋|桔梗のUTAU音源・創作公式HP</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="花占い屋は、管理者・桔梗による創作公式サイトです。UTAU音源の配布、オリジナルキャラクターの紹介、創作作品や関連サイトなどを掲載しています。" />
   <link rel="icon" href="logo.png" type="image/png">
   <link rel="stylesheet" href="style.css">
+
+  <!-- OGP -->
+  <meta property="og:title" content="花占い屋｜桔梗のUTAU音源・創作公式HP" />
+  <meta property="og:description" content="桔梗によるUTAU音源・創作作品を紹介する公式サイトです。" />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://kikyoxxx.github.io/KikoyXxX.github.io/" />
+  <meta property="og:image" content="https://kikyoxxx.github.io/KikoyXxX.github.io/logo.png" />
+  <meta property="og:site_name" content="花占い屋" />
+  <meta property="og:locale" content="ja_JP" />
+
+  <!-- Twitter / X -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="花占い屋｜桔梗のUTAU音源・創作公式HP" />
+  <meta name="twitter:description" content="桔梗によるUTAU音源・創作作品を紹介する公式サイトです。" />
+  <meta name="twitter:image" content="https://kikyoxxx.github.io/KikoyXxX.github.io/logo.png" />
 
     <!-- ➊ 外部スクリプト読み込み (three.js 本体) -->
     <script type="importmap">
@@ -58,13 +74,13 @@
 
       // カメラを初期化
       const camera = new THREE.PerspectiveCamera(
-        10,
+        30,
         myCanvas.clientWidth / myCanvas.clientHeight,
-        0.01,
+        0.1,
         100
       );
-      camera.position.set(0, 200, 2.2);
-      camera.lookAt(scene.position);
+      camera.position.set(100, 50, 2.95);
+      camera.lookAt(0, 1.48, 0);
 
       // レンダラーの初期化
       const renderer = new THREE.WebGLRenderer({ canvas: myCanvas });
@@ -98,6 +114,17 @@
       // GLB読み込み
       const loader = new GLTFLoader();
       let modelRoot;
+      const loadingScreen = document.querySelector('.loadingScreen');
+      const loadingStartedAt = performance.now();
+
+      function hideLoadingScreen() {
+        if (!loadingScreen) return;
+        const elapsed = performance.now() - loadingStartedAt;
+        const remaining = Math.max(0, 2400 - elapsed);
+        window.setTimeout(() => {
+          loadingScreen.classList.add('is-hidden');
+        }, remaining);
+      }
 
   // アニメ用クロック（流れ星など）
   const clock = new THREE.Clock();
@@ -330,26 +357,39 @@
             }
           }
 
-          // モデル全体のサイズを見て、良い感じにカメラを合わせる
+          // Fixed stage framing: character in the back, desk/UI in the foreground.
           const box = new THREE.Box3().setFromObject(modelRoot);
           const size = box.getSize(new THREE.Vector3());
           const center = box.getCenter(new THREE.Vector3());
 
-          modelRoot.position.sub(center); // 原点に寄せる
+          const desiredHeight = 2.35;
+          const scale = size.y > 0 ? desiredHeight / size.y : 1;
+          modelRoot.scale.setScalar(scale);
+
+          const scaledBox = new THREE.Box3().setFromObject(modelRoot);
+          const scaledCenter = scaledBox.getCenter(new THREE.Vector3());
+
+          // まず中心を原点に寄せる
+          modelRoot.position.sub(scaledCenter);
+
+          // その後に床位置を再計測して、腰でなく顔が画角に入る高さへ配置
+          const leveledBox = new THREE.Box3().setFromObject(modelRoot);
+          const floorY = leveledBox.min.y;
+          modelRoot.position.y += -1.18 - floorY;
 
           // 「寄ってくる」の基準位置を確定（centerを引いた後）
           modelBasePos.copy(modelRoot.position);
           basePosCaptured = true;
 
-          const maxDim = Math.max(size.x, size.y, size.z);
-          const fitDist = maxDim / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2));
-          camera.position.set(0, Math.max(0.8, maxDim * 0.3), fitDist * 0.5);
-          orbitControls.target.set(0, Math.max(1, maxDim * 1.7), 0);
+          camera.position.set(0, 5.5, 6);
+          orbitControls.target.set(0, 3, 0);
           orbitControls.update();
+          hideLoadingScreen();
         },
         undefined,
         (err) => {
           console.error('GLBの読み込みに失敗しました:', err);
+          hideLoadingScreen();
         }
       );
 
@@ -371,7 +411,7 @@
       // mouseNdc(-1..1) を使い、各UIレイヤーを少しずつ別速度で動かす
       const PARALLAX_ENABLED = true;
       // 値が大きいほど動く（px）
-      const PARALLAX_STRENGTH = 5;
+      const PARALLAX_STRENGTH = 10;
       // 追従のなめらかさ
       const PARALLAX_FOLLOW = 0.07;
       const parallaxLayers = [];
@@ -391,10 +431,8 @@
 
         // 背中側(遠い)ほど小さく、手前ほど大きく
         pick('.layer-frame',  0, 0.40, 0.40);
-        pick('.layer-side',   0, 0.70, 0.60);
         pick('.layer-hud',    0, 0.85, 0.75);
         pick('.layer-logo',   0, 1.10, 0.90);
-        pick('.layer-links',  0, 1.25, 1.10);
       }
 
       function updateParallax() {
@@ -583,10 +621,212 @@
         renderer.render(scene, camera);
       });
     </script>
-  </head>
+  
+<style id="mobile-card-navigation">
+/* =========================================================
+   Smartphone card navigation
+   PC: 現在のトランプカード
+   SP: 横幅を収めた「アイコン＋名称」のナビゲーション
+   ========================================================= */
+
+@media (max-width: 720px) {
+
+  /* カード群を画面内に収める */
+  .cardNav {
+    width: min(92vw, 420px);
+    max-width: 420px;
+    margin: -110px auto 0;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    box-sizing: border-box;
+  }
+
+  /* スマホでは「カード」ではなくナビボタンとして見せる */
+  .cardNav .cardBtn.imageCard {
+    position: relative;
+    width: 100%;
+    min-width: 0;
+    height: 82px;
+    min-height: 82px;
+    box-sizing: border-box;
+    overflow: hidden;
+
+    display: grid;
+    grid-template-columns: 54px minmax(0, 1fr);
+    grid-template-rows: 1fr 1fr;
+    align-items: center;
+
+    padding: 8px 12px;
+    border-radius: 10px;
+
+    background:
+      linear-gradient(135deg, rgba(49, 34, 58, .96), rgba(18, 14, 24, .98));
+
+    border: 1px solid rgba(202, 163, 106, .38);
+    box-shadow:
+      0 8px 18px rgba(0, 0, 0, .42),
+      inset 0 0 0 1px rgba(255,255,255,.025);
+
+    text-decoration: none;
+  }
+
+  /* 画像は小さなサムネイルとして表示 */
+  .cardNav .cardBtn .cardArtwork {
+    grid-column: 1;
+    grid-row: 1 / 3;
+
+    width: 46px;
+    height: 62px;
+    object-fit: cover;
+    border-radius: 6px;
+
+    opacity: .78;
+    filter: brightness(.58) saturate(.75) contrast(1.05);
+
+    box-shadow: 0 4px 10px rgba(0,0,0,.38);
+  }
+
+  /* 日本語タイトル */
+  .cardNav .cardBtn .cardHint,
+  .cardNav .cardBtn .label {
+    grid-column: 2;
+    grid-row: 1;
+
+    position: static;
+    margin: 0;
+    padding: 0;
+
+    font-family: var(--font-serif-jp, "Noto Serif JP", serif);
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.35;
+    letter-spacing: .08em;
+    color: #f4ead8;
+
+    background: none;
+    border: 0;
+    text-shadow: 0 1px 5px rgba(0,0,0,.5);
+    opacity: 1;
+    transform: none;
+  }
+
+  /* 重複しているラベルはスマホでは非表示 */
+  .cardNav .cardBtn .label {
+    display: none;
+  }
+
+  /* 英字 */
+  .cardNav .cardBtn .meta {
+    grid-column: 2;
+    grid-row: 2;
+
+    position: static;
+    margin: 0;
+    padding: 0;
+
+    font-family: var(--font-display, "Cormorant Garamond", serif);
+    font-size: 10px;
+    font-weight: 500;
+    line-height: 1;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+
+    color: rgba(202,163,106,.82);
+  }
+
+  /* 右矢印 */
+  .cardNav .cardBtn .lead {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+
+    margin: 0;
+    font-family: var(--font-display, serif);
+    font-size: 18px;
+    font-weight: 400;
+    color: rgba(202,163,106,.78);
+  }
+
+  /* トランプのスート記号はスマホでは邪魔になりやすいので隠す */
+  .cardNav .cardBtn .centerSuit {
+    display: none;
+  }
+
+  /* hover可能な端末だけ軽い反応 */
+  @media (hover: hover) {
+    .cardNav .cardBtn.imageCard:hover {
+      transform: translateY(-2px);
+      border-color: rgba(202,163,106,.65);
+      box-shadow:
+        0 11px 22px rgba(0,0,0,.48),
+        0 0 14px rgba(202,163,106,.10);
+    }
+
+    .cardNav .cardBtn.imageCard:hover .cardArtwork {
+      filter: brightness(.72) saturate(.86) contrast(1.05);
+    }
+  }
+
+  /* タップ時 */
+  .cardNav .cardBtn.imageCard:active {
+    transform: translateY(1px) scale(.985);
+  }
+
+  /* 5個目のSNSを中央に置く */
+  .cardNav .cardBtn.imageCard:nth-child(5) {
+    grid-column: 1 / -1;
+    width: calc(50% - 5px);
+    justify-self: center;
+  }
+
+  /* スマホではデスク側の余白も調整 */
+  .fortuneDesk {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+}
+
+/* さらに狭い端末 */
+@media (max-width: 380px) {
+  .cardNav {
+    width: 94vw;
+    gap: 7px;
+  }
+
+  .cardNav .cardBtn.imageCard {
+    height: 74px;
+    min-height: 74px;
+    grid-template-columns: 46px minmax(0, 1fr);
+    padding: 7px 9px;
+  }
+
+  .cardNav .cardBtn .cardArtwork {
+    width: 39px;
+    height: 58px;
+  }
+
+  .cardNav .cardBtn .cardHint {
+    font-size: 12px;
+    letter-spacing: .05em;
+  }
+
+  .cardNav .cardBtn .meta {
+    font-size: 9px;
+    letter-spacing: .12em;
+  }
+}
+</style>
+
+</head>
 
   <!-- ➍ three.jsの描画先canvas -->
   <body>
+  <div class="loadingScreen" aria-label="Loading">
+    <img src="./logo.png" alt="KOTO" decoding="async" />
+  </div>
   <div class="fx" aria-hidden="true">
     <div class="dim"></div>
     <div class="glow"></div>
@@ -597,61 +837,111 @@
   <div class="brand parallax layer-logo" aria-label="Site logo">
       <img class="brandLogo" src="./logo.png" alt="KOTO" decoding="async" />
     </div>
-    <button class="menuButton" id="menuButton">
-  <span></span>
-  <span></span>
-  <span></span>
-</button>
 
-  <aside class="side parallax layer-side">
-      <nav class="nav">
-        <a  onclick="location.href='rule.html'">
-          <div>
-            <div class="label">利用規約</div>
-            <div class="jp">桔梗の制作物に関するルール表記</div>
-          </div>
-          <div style="color: rgba(184, 134, 255, 0.75); font-weight: 900;">›</div>
-        </a>
-        <a  onclick="location.href='character.html'" data-target="#character">
-          <div>
-            <div class="label">Character</div>
-            <div class="jp">キャラクターの紹介</div>
-          </div>
-          <div style="color: rgba(184, 134, 255, 0.75); font-weight: 900;">›</div>
-        </a>
-        <a onclick="location.href='https://bowlroll.net/user/837994'" data-target="#download">
-          <div>
-            <div class="label">Download</div>
-            <div class="jp">bowlrollに飛びます</div>
-          </div>
-          <div style="color: rgba(184, 134, 255, 0.75); font-weight: 900;">›</div>
-        </a>
-        <a onclick="location.href='https://www.youtube.com/@Kikyo-KotO'" data-target="#youtube">
-          <div>
-            <div class="label">YouTube</div>
-            <div class="jp">関連動画を投稿しています</div>
-          </div>
-          <div style="color: rgba(184, 134, 255, 0.75); font-weight: 900;">›</div>
-        </a>
-        <a onclick="location.href='https://x.com/kk20588'" data-target="#sns">
-          <div>
-            <div class="label">SNS</div>
-            <div class="jp">DM解放しています</div>
-          </div>
-          <div style="color: rgba(184, 134, 255, 0.75); font-weight: 900;">›</div>
-        </a>
-      </nav>
+    <button class="infoToggle" type="button" aria-label="インフォメーションを開く" aria-controls="information" aria-expanded="false">
+      <span aria-hidden="true">i</span>
+    </button>
 
-      
-    </aside>
+    <section class="announcementRail" aria-label="最新のお知らせ" data-announcement-carousel>
+      <div class="announcementViewport">
+        <div class="announcementTrack">
+          <a class="announcementBanner is-active" href="https://www.youtube.com/@Kikyo-KotO" target="_blank" rel="noopener noreferrer">
+            <img src="./img/banner-placeholder.svg" alt="最新動画を見る" decoding="async" />
+            <span class="announcementBanner__copy">
+              <span class="announcementBanner__eyebrow">LATEST VIDEO</span>
+              <strong>【UTAUcover】被害妄想携帯女子（笑）【逆巻（自作音源）】</strong>
+              <span class="announcementBanner__action">YouTube で見る<span aria-hidden="true"></span></span>
+            </span>
+          </a>
 
-  <section class="hud parallax layer-hud">
+          <!--
+          <div class="announcementBanner">
+            <img src="./img/banner-placeholder.svg" alt="お知らせを見る" decoding="async" />
+            <span class="announcementBanner__copy">
+              <span class="announcementBanner__eyebrow">INFORMATION</span>
+              <strong>最近のお知らせ</strong>
+              <span class="announcementBanner__action">右上の i から見る</span>
+            </span>
+          </div>
+          -->
+
+        
+        </div>
+      </div>
+      <button class="announcementArrow announcementArrow--prev" type="button" aria-label="前の広告を見る">‹</button>
+      <button class="announcementArrow announcementArrow--next" type="button" aria-label="次の広告を見る">›</button>
+      <div class="announcementDots" aria-label="広告スライド選択"></div>
+    </section>
+
+    <section class="hero parallax layer-side">
+   
+
+      <div class="tableWrap">
+        <div class="fortuneDesk">
+         
+          <div class="tableGlow" aria-hidden="true"></div>
+
+          <nav class="cardNav parallax layer-links" aria-label="Page navigation cards">
+            <a class="cardBtn imageCard spade" href="rule.html" onclick="location.href='rule.html'" data-suit="♠">
+              <img class="cardArtwork" src="./利用規約.png" alt="利用規約" decoding="async" />
+              <span class="cardHint">利用規約</span>
+              <span class="meta">Guideline</span>
+              <span class="label">利用規約</span>
+              <span class="lead">›</span>
+              <span class="centerSuit" aria-hidden="true">♠</span>
+            </a>
+
+            <a class="cardBtn imageCard heart characterCard" href="character.html" onclick="location.href='character.html'" data-target="#character" data-suit="♥" aria-label="キャラクター">
+              <img class="cardArtwork" src="./character.png" alt="Character" decoding="async" />
+              <span class="cardHint">キャラクター</span>
+              <span class="meta">Character</span>
+              <span class="label">キャラクター</span>
+              <span class="lead">›</span>
+              <span class="centerSuit" aria-hidden="true">♥</span>
+            </a>
+
+            <a class="cardBtn imageCard diamond" href="https://bowlroll.net/user/837994" onclick="location.href='https://bowlroll.net/user/837994'" data-target="#download" data-suit="♦">
+              <img class="cardArtwork" src="./bowlroll.png" alt="Download" decoding="async" />
+              <span class="cardHint">ダウンロード</span>
+              <span class="meta">Download</span>
+              <span class="label">Download</span>
+              <span class="lead">›</span>
+              <span class="centerSuit" aria-hidden="true">♦</span>
+            </a>
+
+            <a class="cardBtn imageCard club" href="https://www.youtube.com/@Kikyo-KotO" onclick="location.href='https://www.youtube.com/@Kikyo-KotO'" data-target="#youtube" data-suit="♣">
+              <img class="cardArtwork" src="./youtube.png" alt="YouTube" decoding="async" />
+              <span class="cardHint">YouTube</span>
+              <span class="meta">YouTube</span>
+              <span class="label">YouTube</span>
+              <span class="lead">›</span>
+              <span class="centerSuit" aria-hidden="true">♣</span>
+            </a>
+
+            <a class="cardBtn imageCard star" href="https://x.com/kk20588" onclick="location.href='https://x.com/kk20588'" data-target="#sns" data-suit="★">
+              <img class="cardArtwork" src="./SNS.png" alt="SNS" decoding="async" />
+              <span class="cardHint">SNS</span>
+              <span class="meta">SNS</span>
+              <span class="label">SNS</span>
+              <span class="lead">›</span>
+              <span class="centerSuit" aria-hidden="true">★</span>
+            </a>
+          </nav>
+        </div>
+      </div>
+    </section>
+
+  <section class="hud parallax layer-hud" id="information">
 
       <div class="panel">
-        <h3>Information</h3>
+        <div class="panelHeader">
+          <h3>Information</h3>
+          <button class="infoClose" type="button" aria-label="インフォメーションを閉じる">×</button>
+        </div>
         <div style="display:grid; gap: 8px; color: var(--muted); font-size: 12px; line-height: 1.6;">
+          <div><span style="color: var(--text); font-weight: 800;">2026/11/12</span>当サイトを更新しました。</div>
           <div><span style="color: var(--text); font-weight: 800;">2026/06/19</span>UTAU音源「逆巻」の配布を開始しました。</div>
-          <div><span style="color: var(--text); font-weight: 800;">2026/06/17</span>　桔梗の仮サイトを公開しました。</div>
+          <div><span style="color: var(--text); font-weight: 800;">2026/06/17</span>桔梗の仮サイトを公開しました。</div>
         </div>
       </div>
     </section>
@@ -661,17 +951,84 @@
     
   </div>
   <canvas id="myCanvas" style="width: 100vw; height: 100vh; display: block"></canvas>
+  <script>
+    (() => {
+      const information = document.querySelector('#information');
+      const infoToggle = document.querySelector('.infoToggle');
+      const infoClose = document.querySelector('.infoClose');
+      const carousel = document.querySelector('[data-announcement-carousel]');
+      if (!carousel || !information || !infoToggle || !infoClose) return;
 
-   <script>
-const menuButton = document.getElementById("menuButton");
-const side = document.querySelector(".side");
+      function setInformationOpen(isOpen) {
+        information.classList.toggle('is-open', isOpen);
+        infoToggle.setAttribute('aria-expanded', String(isOpen));
+        if (isOpen) infoClose.focus();
+        else infoToggle.focus();
+      }
 
-menuButton.addEventListener("click", ()=>{
+      infoToggle.addEventListener('click', () => setInformationOpen(true));
+      infoClose.addEventListener('click', () => setInformationOpen(false));
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && information.classList.contains('is-open')) {
+          setInformationOpen(false);
+        }
+      });
 
-    side.classList.toggle("open");
-    menuButton.classList.toggle("open");
+      const track = carousel.querySelector('.announcementTrack');
+      const slides = [...carousel.querySelectorAll('.announcementBanner')];
+      const dots = carousel.querySelector('.announcementDots');
+      const previous = carousel.querySelector('.announcementArrow--prev');
+      const next = carousel.querySelector('.announcementArrow--next');
+      const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+      let current = 0;
+      let timer;
 
-});
-</script>
+      slides.forEach((slide, index) => {
+        const dot = document.createElement('button');
+        dot.type = 'button';
+        dot.className = 'announcementDot';
+        dot.setAttribute('aria-label', `${index + 1}番目の広告を見る`);
+        dot.addEventListener('click', () => showSlide(index));
+        dots.append(dot);
+      });
+
+      function showSlide(index) {
+        current = (index + slides.length) % slides.length;
+        track.style.transform = `translateX(-${current * 100}%)`;
+        slides.forEach((slide, slideIndex) => {
+          slide.classList.toggle('is-active', slideIndex === current);
+        });
+        dots.querySelectorAll('.announcementDot').forEach((dot, dotIndex) => {
+          dot.classList.toggle('is-active', dotIndex === current);
+          dot.setAttribute('aria-current', dotIndex === current ? 'true' : 'false');
+        });
+      }
+
+      function startRotation() {
+        window.clearInterval(timer);
+        if (!reduceMotion.matches) {
+          timer = window.setInterval(() => showSlide(current + 1), 6000);
+        }
+      }
+
+      previous.addEventListener('click', () => {
+        showSlide(current - 1);
+        startRotation();
+      });
+      next.addEventListener('click', () => {
+        showSlide(current + 1);
+        startRotation();
+      });
+      carousel.addEventListener('mouseenter', () => window.clearInterval(timer));
+      carousel.addEventListener('mouseleave', startRotation);
+      carousel.addEventListener('focusin', () => window.clearInterval(timer));
+      carousel.addEventListener('focusout', (event) => {
+        if (!carousel.contains(event.relatedTarget)) startRotation();
+      });
+      reduceMotion.addEventListener?.('change', startRotation);
+      showSlide(0);
+      startRotation();
+    })();
+  </script>
   </body>
 </html>
